@@ -85,7 +85,7 @@ class ArticleViewModel (private val articleId: String) : BaseViewModel<ArticleSt
         else{
             Notify.ActionMessage(
                 "Delete from bookmarks",
-                "No, save it",
+                "Undo",
                 toggleBookmark
             )
         }
@@ -124,6 +124,7 @@ class ArticleViewModel (private val articleId: String) : BaseViewModel<ArticleSt
     }
 
     override fun handleSearch(query: String?) {
+
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
