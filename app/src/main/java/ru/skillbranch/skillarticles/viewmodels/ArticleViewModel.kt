@@ -85,7 +85,7 @@ class ArticleViewModel (private val articleId: String) : BaseViewModel<ArticleSt
         else{
             Notify.ActionMessage(
                 "Delete from bookmarks",
-                "No, save it in bookmarks",
+                "No, save it",
                 toggleBookmark
             )
         }
