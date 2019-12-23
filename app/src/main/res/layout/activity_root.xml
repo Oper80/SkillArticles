@@ -53,7 +53,7 @@
         tools:visibility="visible"/>
 
     <ru.skillbranch.skillarticles.ui.custom.Bottombar
-        android:id="@+id/bottom_bar"
+        android:id="@+id/bottombar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
