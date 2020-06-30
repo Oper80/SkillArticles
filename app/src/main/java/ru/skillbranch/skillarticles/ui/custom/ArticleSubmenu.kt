@@ -41,6 +41,7 @@ class ArticleSubmenu @JvmOverloads constructor(
         if (!isOpen || !isAttachedToWindow) return
         isOpen = false
         animatedHide()
+
     }
 
     private fun animatedShow() {
