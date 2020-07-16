@@ -1,4 +1,4 @@
-package ru.skillbranch.skillarticles.extensions
+    package ru.skillbranch.skillarticles.extensions
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -21,6 +21,12 @@ fun Context.dpToIntPx(dp: Int): Int {
         dp.toFloat(),
         this.resources.displayMetrics
     ).toInt()
+}
+
+fun Context.attrValue(attr: Int): Int{
+    val tv = TypedValue()
+    this.theme.resolveAttribute(attr, tv, true)
+    return tv.data
 }
 
 val Context.isNetworkAvailable: Boolean
