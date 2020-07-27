@@ -1,17 +1,19 @@
-    package ru.skillbranch.skillarticles.extensions
+package ru.skillbranch.skillarticles.extensions
 
+import android.app.Activity
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.TypedValue
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 
 fun Context.dpToPx(dp: Int): Float {
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.toFloat(),
         this.resources.displayMetrics
-
     )
 }
 
@@ -23,10 +25,9 @@ fun Context.dpToIntPx(dp: Int): Int {
     ).toInt()
 }
 
-fun Context.attrValue(attr: Int): Int{
-    val tv = TypedValue()
-    this.theme.resolveAttribute(attr, tv, true)
-    return tv.data
+fun Context.hideKeyboard(view: View){
+    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
 }
 
 val Context.isNetworkAvailable: Boolean
@@ -43,3 +44,12 @@ val Context.isNetworkAvailable: Boolean
             cm.activeNetworkInfo?.run { isConnectedOrConnecting } ?: false
         }
     }
+
+fun Context.attrValue(attrId: Int): Int{
+
+    val tv = TypedValue()
+    val a = this.obtainStyledAttributes(tv.data, intArrayOf(attrId))
+    val result = a.getColor(0,0)
+    a.recycle()
+    return result
+}
