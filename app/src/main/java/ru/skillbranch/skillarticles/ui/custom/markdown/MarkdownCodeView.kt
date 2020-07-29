@@ -153,7 +153,7 @@ class MarkdownCodeView private constructor(
         val width = View.getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
 
         measureChild(sv_scroll, widthMeasureSpec, heightMeasureSpec)
-
+        measureChild(iv_copy, widthMeasureSpec, heightMeasureSpec)
         usedHeight += sv_scroll.measuredHeight + paddingTop + paddingBottom
 
         setMeasuredDimension(width, usedHeight)
@@ -162,12 +162,12 @@ class MarkdownCodeView private constructor(
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         var usedHeight = paddingTop
-        val bodyWidth = right - left - paddingLeft - paddingRight
+        val bodyWidth = r - l - paddingLeft - paddingRight
         val left = paddingLeft
-        val right = bodyWidth + paddingRight
+        val right = bodyWidth + paddingLeft
 
         if (isSingleLine) {
-            val iconHeight = (bottom - top - iconSize) / 2
+            val iconHeight = (b - t - iconSize) / 2
 
             iv_copy.layout(
                 right - iconSize,
@@ -198,15 +198,12 @@ class MarkdownCodeView private constructor(
             )
         }
 
-
         sv_scroll.layout(
             left,
             usedHeight,
             right,
             usedHeight + sv_scroll.measuredHeight
         )
-
-        usedHeight += sv_scroll.measuredHeight + paddingBottom
     }
 
     override fun renderSearchPosition(searchPosition: Pair<Int, Int>, offset: Int) {
@@ -231,33 +228,35 @@ class MarkdownCodeView private constructor(
 
     override fun onSaveInstanceState(): Parcelable? {
         val myState = SavedState(super.onSaveInstanceState())
-        myState.ssIsDark = isDark
         myState.ssIsManual = isManual
+        myState.ssIsDark = isDark
         return myState
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         super.onRestoreInstanceState(state)
-        state as SavedState
-        isDark = state.ssIsDark
-        isManual = state.ssIsManual
-        applyColors()
+        if(state is SavedState) {
+            isManual = state.ssIsManual
+            isDark = state.ssIsDark
+            applyColors()
+        }
     }
 
     private class SavedState : BaseSavedState, Parcelable {
-        var ssIsDark = false
         var ssIsManual = false
+        var ssIsDark = false
 
         constructor(superState: Parcelable?) : super(superState)
+
         constructor(source: Parcel) : super(source) {
-            ssIsDark = source.readInt() == 1
             ssIsManual = source.readInt() == 1
+            ssIsDark = source.readInt() == 1
         }
 
         override fun writeToParcel(out: Parcel, flags: Int) {
             super.writeToParcel(out, flags)
-            out.writeInt(if (ssIsDark) 1 else 0)
             out.writeInt(if (ssIsManual) 1 else 0)
+            out.writeInt(if (ssIsDark) 1 else 0)
         }
 
         override fun describeContents(): Int = 0

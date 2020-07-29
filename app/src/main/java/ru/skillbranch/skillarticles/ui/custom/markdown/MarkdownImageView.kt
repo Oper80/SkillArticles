@@ -6,7 +6,6 @@ import android.graphics.*
 import android.os.Parcel
 import android.os.Parcelable
 import android.text.Spannable
-import android.util.SparseArray
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
@@ -15,12 +14,10 @@ import androidx.annotation.Px
 import androidx.annotation.VisibleForTesting
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.ColorUtils
-import androidx.core.util.isEmpty
 import androidx.core.view.*
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import kotlinx.android.synthetic.main.activity_root.view.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.attrValue
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
@@ -28,8 +25,6 @@ import ru.skillbranch.skillarticles.extensions.dpToPx
 import ru.skillbranch.skillarticles.extensions.setPaddingOptionally
 import java.nio.charset.Charset
 import java.security.MessageDigest
-import java.text.ParseException
-import javax.xml.parsers.ParserConfigurationException
 import kotlin.math.hypot
 
 
@@ -48,7 +43,7 @@ class MarkdownImageView private constructor(
         }
 
     override val spannableContent: Spannable
-        get()  = tv_title.text as Spannable
+        get() = tv_title.text as Spannable
 
 
     //views
@@ -99,16 +94,13 @@ class MarkdownImageView private constructor(
     init {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         iv_image = ImageView(context).apply {
-            scaleType = ImageView.ScaleType.CENTER_CROP
-            setImageResource(R.mipmap.ic_launcher)
-            outlineProvider = object : ViewOutlineProvider(){
+            outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
                     outline.setRoundRect(
                         Rect(0, 0, view.measuredWidth, view.measuredHeight),
                         cornerRadius
                     )
                 }
-
             }
             clipToOutline = true
         }
@@ -135,30 +127,23 @@ class MarkdownImageView private constructor(
         imageTitle = title
         tv_title.setText(title, TextView.BufferType.SPANNABLE)
 
-        Glide
-            .with(context)
-            .load(url)
-            .transform(AspectRatioResizeTransform())
-            .into(iv_image)
-
-
         if (alt != null) {
             tv_alt = TextView(context).apply {
                 text = alt
                 setTextColor(colorOnSurface)
                 setBackgroundColor(ColorUtils.setAlphaComponent(colorSurface, 160))
                 gravity = Gravity.CENTER
+                textSize = fontSize
                 setPadding(titleTopMargin)
                 isVisible = false
             }
+            addView(tv_alt)
 
-        }
-
-        addView(tv_alt)
-
-        iv_image.setOnClickListener {
-            if (tv_alt?.isVisible == true) animateHideAlt()
-            else animateShowAlt()
+            iv_image.setOnClickListener {
+                if (tv_alt?.isVisible == true) animateHideAlt()
+                else animateShowAlt()
+                isOpen = !isOpen
+            }
         }
     }
 
@@ -176,10 +161,11 @@ class MarkdownImageView private constructor(
         var usedHeight = 0
         val width = View.getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
         val ms = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
-        if(aspectRatio != 0f){
-            val hms = MeasureSpec.makeMeasureSpec((width / aspectRatio).toInt(),MeasureSpec.EXACTLY)
+        if (aspectRatio != 0f) {
+            val hms =
+                MeasureSpec.makeMeasureSpec((width / aspectRatio).toInt(), MeasureSpec.EXACTLY)
             iv_image.measure(ms, heightMeasureSpec)
-        }else iv_image.measure(ms, heightMeasureSpec)
+        } else iv_image.measure(ms, heightMeasureSpec)
 
         tv_title.measure(ms, heightMeasureSpec)
         tv_alt?.measure(ms, heightMeasureSpec)
@@ -300,7 +286,7 @@ class MarkdownImageView private constructor(
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             super.writeToParcel(parcel, flags)
-            parcel.writeInt(if(ssIsOpen) 1 else 0)
+            parcel.writeInt(if (ssIsOpen) 1 else 0)
             parcel.writeFloat(ssAspectRatio)
         }
 
