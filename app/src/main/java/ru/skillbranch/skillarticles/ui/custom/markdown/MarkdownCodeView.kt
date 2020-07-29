@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Parcel
+import android.os.Parcelable
 import android.text.Selection
 import android.text.Spannable
 import android.view.View
@@ -15,18 +17,19 @@ import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.VisibleForTesting
 import androidx.core.view.setPadding
-import kotlinx.android.synthetic.main.activity_root.view.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.attrValue
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
 import ru.skillbranch.skillarticles.extensions.dpToPx
 import ru.skillbranch.skillarticles.extensions.setPaddingOptionally
 
+
 @SuppressLint("ViewConstructor")
 class MarkdownCodeView private constructor(
     context: Context,
     fontSize: Float
 ) : ViewGroup(context, null, 0), IMarkdownView {
+
     override var fontSize: Float = fontSize
         set(value) {
             tv_codeView.textSize = value * 0.85f
@@ -163,7 +166,7 @@ class MarkdownCodeView private constructor(
         val left = paddingLeft
         val right = bodyWidth + paddingRight
 
-        if (isSingleLine){
+        if (isSingleLine) {
             val iconHeight = (bottom - top - iconSize) / 2
 
             iv_copy.layout(
@@ -174,12 +177,12 @@ class MarkdownCodeView private constructor(
             )
 
             iv_switch.layout(
-                iv_copy.right - (2.5*iconSize).toInt(),
+                iv_copy.right - (2.5 * iconSize).toInt(),
                 iconHeight,
-                iv_copy.right - (1.5*iconSize).toInt(),
+                iv_copy.right - (1.5 * iconSize).toInt(),
                 iconHeight + iconSize
             )
-        }else{
+        } else {
             iv_copy.layout(
                 right - iconSize,
                 usedHeight,
@@ -188,9 +191,9 @@ class MarkdownCodeView private constructor(
             )
 
             iv_switch.layout(
-                iv_copy.right - (2.5*iconSize).toInt(),
+                iv_copy.right - (2.5 * iconSize).toInt(),
                 usedHeight,
-                iv_copy.right - (1.5*iconSize).toInt(),
+                iv_copy.right - (1.5 * iconSize).toInt(),
                 usedHeight + iconSize
             )
         }
@@ -225,4 +228,50 @@ class MarkdownCodeView private constructor(
         (background as GradientDrawable).color = ColorStateList.valueOf(bgColor)
         tv_codeView.setTextColor(textColor)
     }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val myState = SavedState(super.onSaveInstanceState())
+        myState.ssIsDark = isDark
+        myState.ssIsManual = isManual
+        return myState
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+        state as SavedState
+        isDark = state.ssIsDark
+        isManual = state.ssIsManual
+        applyColors()
+    }
+
+    private class SavedState : BaseSavedState, Parcelable {
+        var ssIsDark = false
+        var ssIsManual = false
+
+        constructor(superState: Parcelable?) : super(superState)
+        constructor(source: Parcel) : super(source) {
+            ssIsDark = source.readInt() == 1
+            ssIsManual = source.readInt() == 1
+        }
+
+        override fun writeToParcel(out: Parcel, flags: Int) {
+            super.writeToParcel(out, flags)
+            out.writeInt(if (ssIsDark) 1 else 0)
+            out.writeInt(if (ssIsManual) 1 else 0)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(parcel: Parcel): SavedState? {
+                return SavedState(parcel)
+            }
+
+            override fun newArray(size: Int): Array<SavedState?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
 }
+
+

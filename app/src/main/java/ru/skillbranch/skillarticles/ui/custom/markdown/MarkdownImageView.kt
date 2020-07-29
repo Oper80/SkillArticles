@@ -6,6 +6,7 @@ import android.graphics.*
 import android.os.Parcel
 import android.os.Parcelable
 import android.text.Spannable
+import android.util.SparseArray
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
@@ -14,9 +15,8 @@ import androidx.annotation.Px
 import androidx.annotation.VisibleForTesting
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.isVisible
-import androidx.core.view.marginTop
-import androidx.core.view.setPadding
+import androidx.core.util.isEmpty
+import androidx.core.view.*
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -28,6 +28,8 @@ import ru.skillbranch.skillarticles.extensions.dpToPx
 import ru.skillbranch.skillarticles.extensions.setPaddingOptionally
 import java.nio.charset.Charset
 import java.security.MessageDigest
+import java.text.ParseException
+import javax.xml.parsers.ParserConfigurationException
 import kotlin.math.hypot
 
 
@@ -36,6 +38,7 @@ class MarkdownImageView private constructor(
     context: Context,
     fontSize: Float
 ) : ViewGroup(context, null, 0), IMarkdownView {
+
 
     override var fontSize: Float = fontSize
         set(value) {
@@ -89,6 +92,9 @@ class MarkdownImageView private constructor(
         color = lineColor
         strokeWidth = 0f
     }
+
+    private var isOpen = false
+    private var aspectRatio = 0f
 
     init {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
@@ -156,16 +162,29 @@ class MarkdownImageView private constructor(
         }
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        Glide
+            .with(context)
+            .load(imageUrl)
+            .transform(AspectRatioResizeTransform())
+            .into(iv_image)
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         var usedHeight = 0
         val width = View.getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
         val ms = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
+        if(aspectRatio != 0f){
+            val hms = MeasureSpec.makeMeasureSpec((width / aspectRatio).toInt(),MeasureSpec.EXACTLY)
+            iv_image.measure(ms, heightMeasureSpec)
+        }else iv_image.measure(ms, heightMeasureSpec)
 
-        iv_image.measure(ms, heightMeasureSpec)
         tv_title.measure(ms, heightMeasureSpec)
         tv_alt?.measure(ms, heightMeasureSpec)
+
+
 
         usedHeight += iv_image.measuredHeight
         usedHeight += titleTopMargin
@@ -251,6 +270,49 @@ class MarkdownImageView private constructor(
         va.doOnEnd { tv_alt?.isVisible = false }
         va.start()
     }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val state = SavedState(super.onSaveInstanceState())
+        state.ssIsOpen = isOpen
+        state.ssAspectRatio = (iv_image.width.toFloat() / iv_image.height)
+        return state
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+        if (state is SavedState) {
+            isOpen = state.ssIsOpen
+            aspectRatio = state.ssAspectRatio
+            tv_alt?.isVisible = isOpen
+        }
+    }
+
+    private class SavedState : BaseSavedState, Parcelable {
+        var ssIsOpen = false
+        var ssAspectRatio = 0f
+
+        constructor(superState: Parcelable?) : super(superState)
+
+        constructor(src: Parcel) : super(src) {
+            ssIsOpen = src.readInt() == 1
+            ssAspectRatio = src.readFloat()
+        }
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeInt(if(ssIsOpen) 1 else 0)
+            parcel.writeFloat(ssAspectRatio)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(parcel: Parcel): SavedState = SavedState(parcel)
+            override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
+        }
+    }
+
+
 }
 
 class AspectRatioResizeTransform : BitmapTransformation() {
